@@ -226,6 +226,11 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         metadata={"help": "Whether or not to save the training loss curves."},
     )
 
+    res_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the directory to save the res model for low-rank fine-tuning."}
+    )
+
     def __post_init__(self):
         def split_arg(arg):
             if isinstance(arg, str):
@@ -267,3 +272,34 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
             text = f.read()
 
         return cls(**json.loads(text))
+
+
+# config for low-rank fine-tuning
+fp16 = True
+max_rank = 128
+low_rank_config = {
+    "q_proj": {
+        "max_rank": max_rank,
+    },
+    "k_proj": {
+        "max_rank": max_rank,
+    },
+    "v_proj": {
+        "max_rank": max_rank,
+    },
+    "o_proj": {
+        "max_rank": max_rank,
+    },
+    "up_proj": {
+        "max_rank": max_rank,
+    },
+    "down_proj": {
+        "max_rank": max_rank,
+    },
+    "gate_proj": {
+        "max_rank": max_rank,
+    },
+    "common": {
+        "fp16": fp16,
+    },
+}

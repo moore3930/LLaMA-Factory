@@ -1,4 +1,5 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.34.1/examples/pytorch/summarization/run_summarization.py
+import os
 
 from typing import TYPE_CHECKING, List, Optional
 
@@ -12,6 +13,8 @@ from ...model import load_model, load_tokenizer
 from ..utils import create_modelcard_and_push
 from .metric import ComputeMetrics
 from .trainer import CustomSeq2SeqTrainer
+from ...model.lowrank_utils import low_rank_pruning
+from ...model.low_rank_config import LOW_RANK_CONFIG
 
 
 if TYPE_CHECKING:
@@ -31,6 +34,13 @@ def run_sft(
     tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
+
+    if finetuning_args.finetuning_type == "lowrank":
+        # build res_dir
+        res_dir = finetuning_args.res_dir
+        if not os.path.exists(res_dir):
+            os.makedirs(res_dir)
+        model = low_rank_pruning(model, res_dir, LOW_RANK_CONFIG, is_train=True, device="cuda")
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation
@@ -77,6 +87,20 @@ def run_sft(
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 
     # Evaluation
+    if finetuning_args.finetuning_type == "lowrank":
+        # recover model and trainer
+        model = low_rank_pruning(model, res_dir, LOW_RANK_CONFIG, is_train=False, device="cuda")
+        trainer = CustomSeq2SeqTrainer(
+            model=model,
+            args=training_args,
+            finetuning_args=finetuning_args,
+            tokenizer=tokenizer,
+            data_collator=data_collator,
+            callbacks=callbacks,
+            compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
+            **split_dataset(dataset, data_args, training_args),
+        )
+
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
         if training_args.predict_with_generate:  # eval_loss will be wrong if predict_with_generate is enabled
