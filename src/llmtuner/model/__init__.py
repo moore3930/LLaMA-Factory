@@ -1,5 +1,6 @@
 from .loader import load_model, load_model_and_tokenizer, load_tokenizer
 from .utils import find_all_linear_modules, load_valuehead_params
+from .low_rank_linear import LowRankLinear
 
 
 __all__ = [

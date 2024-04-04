@@ -213,7 +213,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Literal["lora", "freeze", "full"] = field(
+    finetuning_type: Literal["lora", "freeze", "full", "lowrank"] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )

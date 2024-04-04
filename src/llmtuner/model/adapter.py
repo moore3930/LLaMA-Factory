@@ -7,8 +7,6 @@ from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ..extras.logging import get_logger
 from .utils import QuantizationMethod, find_all_linear_modules, find_expanded_modules
-from lowrank_utils import low_rank_pruning
-from low_rank_config import LOW_RANK_CONFIG
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
